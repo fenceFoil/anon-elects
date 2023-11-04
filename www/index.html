@@ -9,7 +9,7 @@
     <meta name="theme-color" content="black" />
     <link rel="icon" href="favicon.ico">
     <link rel="stylesheet" href="normalize.css">
-    <title>Election Game Dashboard</title>
+    <title>Election Election</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital@0;1&family=Public+Sans&display=swap');
 
@@ -38,44 +38,25 @@
             text-align: center;
         }
 
-        .starChip {
-            aspect-ratio: 1;
-            max-height: 2em;
-            min-height: 2em;
-            display: grid;
-            place-items: center;
-            background-color: maroon;
-            background-image: url(media/small-star-navy.png);
-            background-position: 0 -0.05em;
-            background-size: cover;
-            background-repeat: no-repeat;
-            border-radius: 50%;
-            font-size: 2em;
-            padding: 0em;
-            color: antiquewhite;
-            /*font-family: 'Public Sans', sans-serif;*/
-            /*font-family: "Lucidia Console";*/
-            font-weight: bold;
-            border-width: 0.1em;
-            border-color: maroon;
-            border-style: solid;
-            /*font-feature-settings: 'tnum';
-            font-variant-numeric: tabular-nums;*/
-
-            transform: translateX(calc((100vw - 2em - 1em) * var(--starPos)));
-        }
-
-        .resultHeader {
-            width: 100%;
-            text-align: left;
-            line-height: 2;
-            padding-top: 2em;
-        }
-
-        .resultLane {
-            max-height: 5em;
-            width: 100%;
+        button {
             background-color: navy;
+            border-color: maroon solid 0.2em;
+            color: antiquewhite;
+            margin-bottom: 1em;
+        }
+
+        .voted {
+
+        }
+
+        .disabled {
+            background-color: maroon;
+            transition: filter 1s;
+        }
+
+        .regalFilter {
+            filter: invert() hue-rotate(-50deg);
+            padding-bottom: 0.25em;
         }
 
         
@@ -90,34 +71,61 @@
     <script src="//unpkg.com/alpinejs" defer></script>
     <script src="chance.min.js"></script>
     <script src="anime.min.js"></script>
-    <div id="app">
-        <span class="timer">:49</span>
+    <div id="app" x-data="d">
+        <div class="timer" x-show="electionRunning" x-text="`:${electionSecondsLeft}`">:49</div>  
+        <div class="timer regalFilter" x-show="!electionRunning">🕰</div>
 
-        <div class="resultHeader">Elections</div>
-        <div class="resultLane">
-            <div class="starChip" style="--starPos: 0.6">9</div>
-        </div>
-        <div class="resultHeader">No More Elections</div>
-        <div class="resultLane">
-            <div class="starChip" style="--starPos: 0.4">7</div>
-        </div>
-        
+        <button class="electionButton" :class="{disabled: !electionRunning}" @click="voteElection()">Vote for <br>Elections!</button>
+        <button class="electionButton" :class="{disabled: !electionRunning}" @click="voteNoElection()">Vote for <br>No Elections!</button>
     </div>
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('d', () => (Object.assign({
-                newword: '',
-                username: localStorage.getItem('username')?localStorage.getItem('username'):`Tornado${Math.floor(Math.random()*100000)}`,
+                //newword: '',
+                //username: localStorage.getItem('username')?localStorage.getItem('username'):`Tornado${Math.floor(Math.random()*100000)}`,
+                electionSecondsLeft: 49,
+                electionEndTime: Date.now(),
+                electionRunning: false,
+                electionsCount: 7,
+                noElectionsCount: 25,
+                currentElectionId: null,
 
-                init() {
-                    localStorage.setItem('username', this.username); // initial value
+                async voteElection() {
+                    this.doCastVote('voteElection')
+                },
+
+                async voteNoElection() {
+                    this.doCastVote('voteNoElection')
+                },
+
+                async doCastVote(choice) {
+                    let alreadyVoted = localStorage.getItem(this.currentElectionId) != null;
+                    if (!alreadyVoted) {
+                        let voted = (await (await fetch('voteElection', {method:'POST'})).json());
+                        localStorage.setItem(this.currentElectionId, choice);
+                    }
+                },
+
+                async init() {
+                    //localStorage.setItem('username', this.username); // initial value
                     let alp = this;
 
-                    setInterval(() => {
+                    setInterval(async () => {
+                        let electionStatus = await (await fetch("electionStatus")).json();
+                        this.electionEndTime = Date.parse(electionStatus.currElectionEndTime);
+                        this.electionsCount = electionStatus.results.elections;
+                        this.noElectionsCount = electionStatus.results.noElections;
+                        this.electionRunning = electionStatus.running;
+                        this.currentElectionId = electionStatus.currElectionId;
                     }, 1000);
 
+                    setInterval(() => {
+                        this.electionSecondsLeft = Math.ceil(Math.max(0, -(Date.now() - this.electionEndTime)/1000));
+                        //this.electionRunning = (this.electionSecondsLeft > 0);
+                    }, 100)
+
                     this.$watch('username', v => {
-                        localStorage.setItem('username', v);
+                        //localStorage.setItem('username', v);
                     })
                 },
             }, {})))

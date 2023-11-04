@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="black" />
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="normalize.css">
+    <title>Election Game Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital@0;1&family=Public+Sans&display=swap');
+
+        /* alpinejs */
+        [x-cloak] { display: none !important; }
+
+        body {
+            max-height: 100vh;
+        }
+        
+        #app {
+            background-color: antiquewhite;
+            background-size: cover;
+            color: navy;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 2em);
+            padding: 1em;
+            font-family: 'Merriweather', serif;
+            font-size:3em;
+        }
+
+        .timer {
+            color: maroon;
+            font-size: 4em;
+            text-align: center;
+        }
+
+        .starChip {
+            aspect-ratio: 1;
+            max-height: 12rem;
+            min-height: 12rem;
+            display: grid;
+            place-items: center;
+            background-color: maroon;
+            background-image: url(media/small-star-navy.png);
+            background-position: 0 -0.05em;
+            background-size: cover;
+            background-repeat: no-repeat;
+            border-radius: 50%;
+            font-size: 2em;
+            padding: 0em;
+            color: antiquewhite;
+            /*font-family: 'Public Sans', sans-serif;*/
+            /*font-family: "Lucidia Console";*/
+            font-weight: bold;
+            border-width: 0.1em;
+            border-color: maroon;
+            border-style: solid;
+            /*font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;*/
+ 
+            transform: translateX(calc((100svw - 2em - 8rem) * var(--starPos)));
+            transition: transform 1s;
+        }
+
+        .resultHeader {
+            width: 100%;
+            text-align: left;
+            line-height: 2;
+            padding-top: 1em;
+        }
+
+        .resultLane {
+            max-height: 5em;
+            width: 100%;
+            background-color: navy;
+        }
+
+        #newElection {
+            opacity: 0.03;
+            position: absolute;
+            left: 0;
+            top: 2em;
+            background-color: navy;
+            color: antiquewhite;
+        }
+
+        #newElection:hover {
+            opacity: 1;
+        }
+
+        #startElection {
+            opacity: 0.03;
+            position: absolute;
+            right: 0;
+            top: 2em;
+            background-color: navy;
+            color: antiquewhite;
+        }
+
+        #startElection:hover {
+            opacity: 1;
+        }
+
+        
+    </style>
+
+    <script>
+
+    </script>
+</head>
+
+<body>
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <script src="chance.min.js"></script>
+    <script src="anime.min.js"></script>
+    <div id="app" x-data="d">
+        <button id="newElection" @click="fetch('newElection', {method:'POST'})">New Election</button>
+        <button id="startElection" @click="fetch('startElection', {method:'POST'})">Start Election</button>
+
+        <div class="timer" x-show="electionRunning" x-text="`:${electionSecondsLeft}`">:49</div>
+        <div class="timer" x-show="!electionRunning"">:00</div>
+
+        <div class="resultHeader">Elections</div>
+        <div class="resultLane">
+            <div class="starChip" :style="`--starPos: ${electionsCount/(electionsCount+noElectionsCount)}`" x-text="electionsCount"></div>
+        </div>
+        <div class="resultHeader">No More Elections</div>
+        <div class="resultLane">
+            <div class="starChip" :style="`--starPos: ${noElectionsCount/(electionsCount+noElectionsCount)}`" x-text="noElectionsCount"></div>
+        </div>
+        
+    </div>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('d', () => (Object.assign({
+                newword: '',
+                username: localStorage.getItem('username')?localStorage.getItem('username'):`Tornado${Math.floor(Math.random()*100000)}`,
+                electionSecondsLeft: 49,
+                electionEndTime: Date.now(),
+                electionRunning: false,
+                electionsCount: 7,
+                noElectionsCount: 25,
+
+                async init() {
+                    localStorage.setItem('username', this.username); // initial value
+                    let alp = this;
+
+                    setInterval(async () => {
+                        let electionStatus = await (await fetch("electionStatus")).json();
+                        this.electionEndTime = Date.parse(electionStatus.currElectionEndTime);
+                        this.electionsCount = electionStatus.results.elections;
+                        this.noElectionsCount = electionStatus.results.noElections;
+                        this.electionRunning = electionStatus.running;
+                    }, 100);
+
+                    setInterval(() => {
+                        this.electionSecondsLeft = Math.ceil(Math.max(0, -(Date.now() - this.electionEndTime)/1000));
+                    }, 100)
+
+                    this.$watch('username', v => {
+                        localStorage.setItem('username', v);
+                    })
+                },
+            }, {})))
+        });
+    </script>
+</body>
+
+</html>
