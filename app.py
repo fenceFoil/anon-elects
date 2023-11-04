@@ -38,6 +38,7 @@ class GameState:
     results: dict
     currElectionId: str = None
     running: bool = False
+    votingLimited: bool = True
     currElectionEndTime: str = (datetime.now() + timedelta(seconds=30)).isoformat()
 
 gameState = GameState(results = {'elections':0, 'noElections':0}) 
@@ -57,6 +58,10 @@ async def newElection():
     gameState.running = False
     gameState.results = makeBlankResults()
     gameState.currElectionEndTime = (datetime.now() + timedelta(seconds=0)).isoformat()
+
+@app.post("/toggleVotingLimits")
+async def toggleVotingLimits():
+    gameState.votingLimited = not gameState.votingLimited
 
 @app.post("/voteElection")
 async def doVoteElection():

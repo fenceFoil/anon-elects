@@ -17,7 +17,7 @@
         [x-cloak] { display: none !important; }
 
         body {
-            max-height: 100vh;
+            height: 100%;
         }
         
         #app {
@@ -76,14 +76,15 @@
         .resultLane {
             max-height: 5em;
             width: 100%;
-            background-color: navy;
+            /*background-color: navy;*/
+            border: navy 0.2em dashed;
         }
 
         #newElection {
             opacity: 0.03;
             position: absolute;
             left: 0;
-            top: 2em;
+            top: 1em;
             background-color: navy;
             color: antiquewhite;
         }
@@ -95,14 +96,22 @@
         #startElection {
             opacity: 0.03;
             position: absolute;
-            right: 0;
-            top: 2em;
+            left: 0;
+            top: 3em;
             background-color: navy;
             color: antiquewhite;
         }
 
         #startElection:hover {
             opacity: 1;
+        }
+
+        #limitVotesButton {
+            position: absolute;
+            right: 0;
+            top: 2em;
+            background-color: navy;
+            color: antiquewhite;
         }
 
         
@@ -120,6 +129,7 @@
     <div id="app" x-data="d">
         <button id="newElection" @click="fetch('newElection', {method:'POST'})">New Election</button>
         <button id="startElection" @click="fetch('startElection', {method:'POST'})">Start Election</button>
+        <button id="limitVotesButton" @click="fetch('toggleVotingLimits', {method:'POST'})" x-text="votingLimited?'One Vote':'UNLIMITED VOTES'"></button>
 
         <div class="timer" x-show="electionRunning" x-text="`:${electionSecondsLeft}`">:49</div>
         <div class="timer" x-show="!electionRunning"">:00</div>
@@ -144,6 +154,7 @@
                 electionRunning: false,
                 electionsCount: 7,
                 noElectionsCount: 25,
+                votingLimited: true,
 
                 async init() {
                     localStorage.setItem('username', this.username); // initial value
@@ -155,6 +166,7 @@
                         this.electionsCount = electionStatus.results.elections;
                         this.noElectionsCount = electionStatus.results.noElections;
                         this.electionRunning = electionStatus.running;
+                        this.votingLimited = electionStatus.votingLimited;
                     }, 100);
 
                     setInterval(() => {

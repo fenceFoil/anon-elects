@@ -49,6 +49,46 @@
 
         }
 
+        .starChip {
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+            background-color: maroon;
+            background-image: url(media/small-star-navy.png);
+            background-position: 0 -0.05em;
+            background-size: cover;
+            background-repeat: no-repeat;
+            border-radius: 50%;
+            font-size: 2em;
+            padding: 0em;
+            color: antiquewhite;
+            /*font-family: 'Public Sans', sans-serif;*/
+            /*font-family: "Lucidia Console";*/
+            font-weight: bold;
+            border-width: 0.1em;
+            border-color: maroon;
+            border-style: solid;
+            /*font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;*/
+ 
+            transform: translateX(calc((100svw - 2em - 8rem) * var(--starPos)));
+            transition: transform 1s;
+            
+        }
+
+        .rotate {
+            animation: rotating 2s ease-in-out infinite;
+        }
+
+        @keyframes rotating {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .disabled {
             background-color: maroon;
             transition: filter 1s;
@@ -73,10 +113,10 @@
     <script src="anime.min.js"></script>
     <div id="app" x-data="d">
         <div class="timer" x-show="electionRunning" x-text="`:${electionSecondsLeft}`">:49</div>  
-        <div class="timer regalFilter" x-show="!electionRunning">🕰</div>
+        <div class="starChip rotate" x-show="!electionRunning || (votingLimited && voted)"></div>
 
-        <button class="electionButton" :class="{disabled: !electionRunning}" @click="voteElection()">Vote for <br>Elections!</button>
-        <button class="electionButton" :class="{disabled: !electionRunning}" @click="voteNoElection()">Vote for <br>No Elections!</button>
+        <button x-show="electionRunning && (!votingLimited || !voted)" class="electionButton" :class="{disabled: !electionRunning}" @click="voteElection()">Vote for <br>Elections!</button>
+        <button x-show="electionRunning && (!votingLimited || !voted)" class="electionButton" :class="{disabled: !electionRunning}" @click="voteNoElection()">Vote for <br>No Elections!</button>
     </div>
     <script>
         document.addEventListener('alpine:init', () => {
@@ -89,6 +129,8 @@
                 electionsCount: 7,
                 noElectionsCount: 25,
                 currentElectionId: null,
+                votingLimited: true,
+                voted: false,
 
                 async voteElection() {
                     this.doCastVote('voteElection')
@@ -100,8 +142,8 @@
 
                 async doCastVote(choice) {
                     let alreadyVoted = localStorage.getItem(this.currentElectionId) != null;
-                    if (!alreadyVoted) {
-                        let voted = (await (await fetch('voteElection', {method:'POST'})).json());
+                    if (!alreadyVoted || !this.votingLimited) {
+                        let voted = (await (await fetch(choice, {method:'POST'})).json());
                         localStorage.setItem(this.currentElectionId, choice);
                     }
                 },
@@ -117,11 +159,14 @@
                         this.noElectionsCount = electionStatus.results.noElections;
                         this.electionRunning = electionStatus.running;
                         this.currentElectionId = electionStatus.currElectionId;
+                        this.votingLimited = electionStatus.votingLimited;
                     }, 1000);
 
                     setInterval(() => {
                         this.electionSecondsLeft = Math.ceil(Math.max(0, -(Date.now() - this.electionEndTime)/1000));
                         //this.electionRunning = (this.electionSecondsLeft > 0);
+
+                        this.voted = localStorage.getItem(this.currentElectionId) != null;
                     }, 100)
 
                     this.$watch('username', v => {
