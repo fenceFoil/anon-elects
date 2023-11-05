@@ -1,27 +1,12 @@
 #standard
-import asyncio
 from dataclasses import dataclass
-import dataclasses
-import html
-import json
 from datetime import datetime, timedelta
-import traceback
-import random
 from datetime import datetime
-import logging
-from logging import debug, getLevelName, info, warning, error, critical, exception
-import os
-from pprint import pprint
-import threading
-import time
 import uuid
-from os.path import exists
 
-from requests.api import delete
-from fastapi import FastAPI, WebSocket, Form, File, UploadFile, Response, Request, WebSocketDisconnect, websockets
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 import starlette.status as status
 from starlette.responses import RedirectResponse
 import dateutil.parser
