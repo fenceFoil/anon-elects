@@ -99,6 +99,17 @@
             padding-bottom: 0.25em;
         }
 
+        #joinCode {
+            position: absolute;
+            top: 5dvh;
+            width: 10dvw;
+            aspect-ratio: 1;
+            background-image: url(media/joinCode.png);
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
         
     </style>
 
@@ -114,6 +125,7 @@
     <div id="app" x-data="d">
         <div class="timer" x-show="electionRunning" x-text="`:${electionSecondsLeft}`">:49</div>  
         <div class="starChip rotate" x-show="!electionRunning || (votingLimited && voted)"></div>
+        <div id="joinCode"></div>
 
         <button x-show="electionRunning && (!votingLimited || !voted)" class="electionButton" :class="{disabled: !electionRunning}" @click="voteElection()">Vote for <br>Elections!</button>
         <button x-show="electionRunning && (!votingLimited || !voted)" class="electionButton" :class="{disabled: !electionRunning}" @click="voteNoElection()">Vote for <br>No Elections!</button>
